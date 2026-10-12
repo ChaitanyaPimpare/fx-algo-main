@@ -1,8 +1,12 @@
+
+import os
+
 from flask import Flask, send_from_directory, request
+from flask_cors import CORS
+from waitress import serve
+
 from config import Config
 from extensions import db, jwt, mail
-from flask_cors import CORS
-import os
 
 # Blueprints
 from routes.auth_routes import auth_bp
@@ -16,44 +20,56 @@ from routes.admin_routes import admin_bp
 from routes.telegram_routes import telegram_bp
 from routes.currency_routes import currency_bp
 
-# IMPORTANT: import model so tables create
+# Import models so SQLAlchemy can register them
 from models.site_setting import SiteSetting
+
 
 # ------------------ CREATE APP ------------------
 
-# React build will be served from /static
-app = Flask(__name__, static_url_path="/uploads", static_folder="uploads")
+app = Flask(
+    __name__,
+    static_url_path="/uploads",
+    static_folder="uploads"
+)
+
 app.config.from_object(Config)
 
 # Prevent trailing slash redirect issues
 app.url_map.strict_slashes = False
 
-# No longer localhost frontend → same origin
 
+# ------------------ CORS CONFIGURATION ------------------
 
-frontend_url = os.getenv(
-    "FRONTEND_URL",
-    "https://frontend-lo20yjpka-chaitanya-s-projects-a2b63bf3.vercel.app"
-)
+allowed_origins = [
+    "https://frontend-psi-seven-39.vercel.app",
+    "https://frontend-lo20yjpka-chaitanya-s-projects-a2b63bf3.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 CORS(
     app,
-    resources={r"/*": {"origins": [
-        frontend_url,
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ]}},
+    resources={r"/*": {"origins": allowed_origins}},
     supports_credentials=True,
     allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],
 )
 
 
-# ------------------ INIT EXTENSIONS ------------------
+# ------------------ INITIALIZE EXTENSIONS ------------------
 
 db.init_app(app)
 jwt.init_app(app)
 mail.init_app(app)
+
+
 # ------------------ REGISTER API ROUTES ------------------
 
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
@@ -64,47 +80,84 @@ app.register_blueprint(license_bp, url_prefix="/api/licenses")
 app.register_blueprint(admin_bp, url_prefix="/api/admin")
 app.register_blueprint(currency_bp, url_prefix="/api/currency")
 
+# These blueprints retain their existing URL prefixes
 app.register_blueprint(telegram_bp)
 app.register_blueprint(testimonial_bp)
 app.register_blueprint(settings_bp)
 
+
 # ------------------ SERVE UPLOAD FILES ------------------
 
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-# ------------------ SERVE REACT FRONTEND ------------------
 
-# Homepage
+# ------------------ HEALTH CHECK ------------------
+
+@app.route("/api/health", methods=["GET"])
+def health_check():
+    return {"status": "ok"}, 200
+
+
+@app.route("/api/health/db", methods=["GET"])
+def database_health_check():
+    try:
+        from sqlalchemy import text
+
+        with db.engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+
+        return {"status": "ok", "database": "connected"}, 200
+
+    except Exception:
+        app.logger.exception("Database health check failed")
+        return {"status": "error", "database": "unavailable"}, 500
+
+
+# ------------------ SERVE FRONTEND (IF PRESENT) ------------------
+
 @app.route("/")
 def index():
-    return send_from_directory(app.static_folder, "index.html")
+    index_path = os.path.join(app.static_folder, "index.html")
 
-# SPA fallback for React Router
+    if os.path.isfile(index_path):
+        return send_from_directory(app.static_folder, "index.html")
+
+    return {
+        "message": "FX-ALGO API is running",
+        "health": "/api/health",
+    }, 200
+
+
+# ------------------ SPA FALLBACK ------------------
+
 @app.errorhandler(404)
-def not_found(e):
-
-    # Allow real API errors
+def not_found(error):
     if request.path.startswith("/api/"):
         return {"error": "API endpoint not found"}, 404
 
-    # Allow real missing upload files
     if request.path.startswith("/uploads/"):
         return {"error": "File not found"}, 404
 
-    # Otherwise return React app
-    return send_from_directory(app.static_folder, "index.html")
+    index_path = os.path.join(app.static_folder, "index.html")
+
+    if os.path.isfile(index_path):
+        return send_from_directory(app.static_folder, "index.html")
+
+    return {"error": "Resource not found"}, 404
 
 
-from waitress import serve
+# ------------------ LOCAL DEVELOPMENT ------------------
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
     print("Server running on http://127.0.0.1:5000")
+
     serve(app, host="0.0.0.0", port=5000)
