@@ -1,0 +1,141 @@
+from flask import Blueprint, request
+from extensions import db
+from models.user import User
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash
+from flask import jsonify
+from datetime import timedelta
+from utils.email import send_reset_email
+
+
+auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.post("/register")
+def register():
+    data = request.json
+
+    existing = User.query.filter_by(email=data["email"]).first()
+    if existing:
+        return {"error": "Email already registered"}, 400
+
+    user = User(
+    email=data["email"],
+    role="user"  # prevents admin creation
+)
+
+    user.set_password(data["password"])
+
+    db.session.add(user)
+    db.session.commit()
+
+    return {"msg": "registered"}
+
+@auth_bp.post("/login")
+def login():
+    data = request.json
+    user = User.query.filter_by(email=data["email"]).first()
+
+    if not user or not user.check_password(data["password"]):
+        return {"error": "Invalid credentials"}, 401
+
+    token = create_access_token(identity=str(user.id))
+
+    return {"token": token, "role": user.role}
+
+@auth_bp.get("/me")
+@jwt_required()
+def get_me():
+
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+
+    if not user:
+        return {"error": "User not found"}, 404
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role
+    }
+
+
+
+@auth_bp.post("/google-login")
+def google_login():
+
+    data = request.json
+
+    email = data.get("email")
+    google_id = data.get("google_id")
+
+    if not email:
+        return {"error": "Email required"}, 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        user = User(
+            email=email,
+            google_id=google_id,
+            password_hash=generate_password_hash("google_auth_user"),
+            role="user"
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+    token = create_access_token(identity=str(user.id))
+
+    return {
+        "token": token,
+        "role": user.role
+    }
+
+@auth_bp.post("/forgot-password")
+def forgot_password():
+
+    email = request.json.get("email")
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    token = create_access_token(
+        identity=str(user.id),
+        expires_delta=timedelta(minutes=30)
+    )
+
+    
+    reset_link = f"https://fxalgo.net/reset-password/{token}"
+
+    send_reset_email(email, reset_link)
+
+    return jsonify({"msg": "Reset email sent"})
+
+@auth_bp.post("/reset-password")
+def reset_password():
+
+    token = request.json.get("token")
+    new_password = request.json.get("password")
+
+    try:
+        from flask_jwt_extended import decode_token
+        decoded = decode_token(token)
+
+        user_id = decoded["sub"]
+
+        user = User.query.get(int(user_id))
+
+        if not user:
+            return {"error": "User not found"}, 404
+
+        user.set_password(new_password)
+
+        db.session.commit()
+
+        return {"msg": "Password updated"}
+
+    except Exception:
+        return {"error": "Invalid or expired token"}, 400
