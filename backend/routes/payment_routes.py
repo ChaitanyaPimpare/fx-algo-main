@@ -13,14 +13,24 @@ from models.order import Order
 
 from utils.telegram import send_admin_alert, send_admin_photo
 
-
 payment_bp = Blueprint("payment", __name__)
 
 client = razorpay.Client(
     auth=(Config.RAZORPAY_KEY_ID, Config.RAZORPAY_KEY_SECRET)
 )
 
-UPLOAD_FOLDER = "uploads/payment_proofs"
+# Vercel's application directory is read-only.
+# /tmp is writable but temporary on Vercel.
+if os.getenv("VERCEL"):
+    UPLOAD_FOLDER = "/tmp/payment_proofs"
+else:
+    BASE_DIR = os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+    UPLOAD_FOLDER = os.path.join(
+        BASE_DIR, "uploads", "payment_proofs"
+    )
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
