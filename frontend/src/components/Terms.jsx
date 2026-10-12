@@ -64,7 +64,7 @@ export default function Terms() {
  
 
 <div className="bg-gradient-to-r from-purple-900 via-black to-cyan-900 text-gray-400 text-xs py-4 text-center border-t border-white/10">
-  © 2026 Developed by Encegen AI Labs &nbsp; | &nbsp;
+  © 2026 Developed by Chaitanya Pimpare &nbsp; | &nbsp;
 
   <Link to="/termspage" className="hover:text-white">
     Terms and Conditions

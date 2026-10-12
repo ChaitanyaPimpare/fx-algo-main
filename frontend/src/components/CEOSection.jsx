@@ -34,13 +34,13 @@ export default function CEOSection() {
           </button> */}
         </div>
 
-        {/* RIGHT SIDE BOX */}
+        {/* RIGHT SIDE BOX
         <div className="ceo-right">
           <div className="video-box">
             <img src="/ceo.png" alt="CEO" className="ceo-image" />
 
           </div>
-        </div>
+        </div> */}
 
       </div>
     </section>
