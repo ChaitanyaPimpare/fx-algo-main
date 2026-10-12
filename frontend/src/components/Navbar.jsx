@@ -104,7 +104,7 @@ export default function Navbar() {
         [&_*]:!cursor-pointer
       "
     >
-      {/* <svg
+      <svg
         // xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"
@@ -118,7 +118,7 @@ export default function Navbar() {
         <path d="m3 10 9-7 9 7" />
         <path d="M5 9v12h14V9" />
         <path d="M9 21v-8h6v8" />
-      </svg> */}
+      </svg>
 
       <span className="pointer-events-none">Home</span>
     </Link>
