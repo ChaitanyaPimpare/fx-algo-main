@@ -30,14 +30,18 @@ app.url_map.strict_slashes = False
 
 # No longer localhost frontend → same origin
 
-frontend_url = os.getenv("https://frontend-psi-seven-39.vercel.app/", "http://localhost:5173")
+
+frontend_url = os.getenv(
+    "FRONTEND_URL",
+    "https://frontend-lo20yjpka-chaitanya-s-projects-a2b63bf3.vercel.app"
+)
 
 CORS(
     app,
-    resources={r"/api/*": {"origins": [
+    resources={r"/*": {"origins": [
+        frontend_url,
         "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        frontend_url
+        "http://127.0.0.1:5173"
     ]}},
     supports_credentials=True,
     allow_headers=["Content-Type", "Authorization"],
