@@ -36,7 +36,7 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminProducts from "./components/admin/AdminProducts";
 import CEOSection from "./components/CEOSection";
 import AdminOrders from "./pages/AdminOrders";
-// import CustomCursor from "./components/CustomCursor";
+import CustomCursor from "./components/CustomCursor";
 import About from "./pages/About";
 import AdminSettings from "./components/admin/AdminSettings";
 import AdminTestimonials from "./components/admin/AdminTestimonials";
