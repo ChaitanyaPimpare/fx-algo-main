@@ -6,13 +6,29 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 
-testimonial_bp = Blueprint("testimonials", __name__, url_prefix="/api/testimonials")
 
-UPLOAD_FOLDER = "uploads/videos"
+
+testimonial_bp = Blueprint(
+    "testimonials",
+    __name__,
+    url_prefix="/api/testimonials"
+)
+
 ALLOWED_EXTENSIONS = {"mp4", "mov", "webm"}
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Vercel: writable temporary storage
+# Local development: project uploads directory
+if os.getenv("VERCEL"):
+    UPLOAD_FOLDER = "/tmp/videos"
+else:
+    BASE_DIR = os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+    UPLOAD_FOLDER = os.path.join(
+        BASE_DIR, "uploads", "videos"
+    )
 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ---------------- FILE VALIDATION ----------------
 def allowed_file(filename):
