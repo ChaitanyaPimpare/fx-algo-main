@@ -238,7 +238,7 @@ export default function App() {
           <AuthProvider>
             <CartProvider>
               <AppRoutes />
-              {/* <CustomCursor /> */}
+              <CustomCursor />
             </CartProvider>
           </AuthProvider>
         </BrowserRouter>
