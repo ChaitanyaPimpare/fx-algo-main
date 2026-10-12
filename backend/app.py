@@ -92,9 +92,16 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "upload
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-@app.route("/uploads/<path:filename>")
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+UPLOAD_FOLDER = (
+    "/tmp/uploads"
+    if os.getenv("VERCEL")
+    else os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "uploads"
+    )
+)
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # ------------------ HEALTH CHECK ------------------

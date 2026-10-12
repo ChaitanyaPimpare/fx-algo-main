@@ -7,10 +7,19 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 
+
 product_bp = Blueprint("products", __name__)
 
-IMAGE_FOLDER = "uploads/images"
-FILE_FOLDER = "uploads/files"
+# Use temporary storage on Vercel; local uploads during development
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if os.getenv("VERCEL"):
+    UPLOAD_BASE = "/tmp/uploads"
+else:
+    UPLOAD_BASE = os.path.join(BASE_DIR, "uploads")
+
+IMAGE_FOLDER = os.path.join(UPLOAD_BASE, "images")
+FILE_FOLDER = os.path.join(UPLOAD_BASE, "files")
 
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 os.makedirs(FILE_FOLDER, exist_ok=True)
