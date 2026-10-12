@@ -87,11 +87,6 @@ app.register_blueprint(settings_bp)
 
 
 # ------------------ SERVE UPLOAD FILES ------------------
-
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-
 UPLOAD_FOLDER = (
     "/tmp/uploads"
     if os.getenv("VERCEL")
