@@ -1,7 +1,30 @@
 @import "tailwindcss";
-body {
+
+/* Restore the normal browser cursor */
+html,
+body,
+#root,
+#root * {
+  cursor: auto;
+}
+
+/* Keep interactive elements clickable */
+a,
+button,
+[role="button"],
+input,
+select,
+/* textarea, */
+label,
+summary {
+  cursor: pointer;
+}
+
+input,
+textarea {
   cursor: none;
 }
+
 
 .golden-title {
   font-family: 'Great Vibes', cursive;

@@ -15,7 +15,7 @@ const About = () => {
 
         <div className="hero-image relative flex items-center justify-center h-64 md:h-80">
   
-  {/* Breadcrumb */}
+  {/* Breadcrumb
   <div className="breadcrumb absolute bottom-6 left-10 text-white text-sm md:text-base">
     <Link 
       to="/" 
@@ -29,7 +29,7 @@ const About = () => {
     <span className="crumb-current text-yellow-400 font-medium">
       About
     </span>
-  </div>
+  </div> */}
 
 </div>
 
